@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test - Event Chey API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Event Chey API - CORS Test</h1>
+
+        <div class="instructions">
+            <strong>⚠️ Instructions:</strong>
+            <ol>
+                <li>Make sure your Spring Boot backend is running on <code>http://localhost:8080</code></li>
+                <li>Serve this HTML file from <code>http://localhost:3000</code> or open it directly</li>
+                <li>Click the buttons below to test API calls</li>
+                <li>Check the results and browser console for CORS errors</li>
+            </ol>
+        </div>
+
+        <h2>Test API Endpoints</h2>
+
+        <div>
+            <button onclick="testGetEvents()">GET /events</button>
+            <button onclick="testCreateEvent()">POST /events (Create Event)</button>
+            <button onclick="testGetSwagger()">GET /swagger-ui.html</button>
+            <button onclick="testOptions()">OPTIONS /events (Preflight)</button>
+            <button onclick="clearResult()">Clear Results</button>
+        </div>
+
+        <div class="input-group">
+            <label>Event Name:</label>
+            <input type="text" id="eventName" value="Test Conference 2025" />
+        </div>
+
+        <div class="input-group">
+            <label>Description:</label>
+            <textarea id="eventDescription" rows="2">Testing CORS from localhost:3000</textarea>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = type;
+            resultDiv.textContent = message;
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '';
+            document.getElementById('result').className = '';
+        }
+
+        async function testGetEvents() {
+            showResult('Loading events...', 'info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/events`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                showResult(
+                    `✅ SUCCESS!\n\n` +
+                    `Status: ${response.status} ${response.statusText}\n` +
+                    `Events found: ${data.length}\n\n` +
+                    `Response:\n${JSON.stringify(data, null, 2)}`,
+                    'success'
+                );
+                console.log('GET /events success:', data);
+            } catch (error) {
+                showResult(
+                    `❌ ERROR!\n\n` +
+                    `${error.message}\n\n` +
+                    `Check browser console for CORS details.`,
+                    'error'
+                );
+                console.error('GET /events error:', error);
+            }
+        }
+
+        async function testCreateEvent() {
+            const eventName = document.getElementById('eventName').value;
+            const eventDescription = document.getElementById('eventDescription').value;
+
+            showResult('Creating event...', 'info');
+
+            const eventData = {
+                name: eventName,
+                description: eventDescription,
+                startDate: '2025-12-01T09:00:00',
+                endDate: '2025-12-01T17:00:00',
+                createdBy: 'test@example.com'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(eventData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                showResult(
+                    `✅ SUCCESS!\n\n` +
+                    `Status: ${response.status} ${response.statusText}\n` +
+                    `Event Created!\n\n` +
+                    `Response:\n${JSON.stringify(data, null, 2)}`,
+                    'success'
+                );
+                console.log('POST /events success:', data);
+            } catch (error) {
+                showResult(
+                    `❌ ERROR!\n\n` +
+                    `${error.message}\n\n` +
+                    `Check browser console for CORS details.`,
+                    'error'
+                );
+                console.error('POST /events error:', error);
+            }
+        }
+
+        async function testGetSwagger() {
+            showResult('Loading Swagger UI...', 'info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/swagger-ui.html`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                showResult(
+                    `✅ SUCCESS!\n\n` +
+                    `Status: ${response.status} ${response.statusText}\n` +
+                    `Swagger UI is accessible!\n\n` +
+                    `Open: ${API_BASE_URL}/swagger-ui.html`,
+                    'success'
+                );
+            } catch (error) {
+                showResult(
+                    `❌ ERROR!\n\n` +
+                    `${error.message}\n\n` +
+                    `Check browser console for details.`,
+                    'error'
+                );
+                console.error('Swagger error:', error);
+            }
+        }
+
+        async function testOptions() {
+            showResult('Testing OPTIONS preflight request...', 'info');
+            try {
+                const response = await fetch(`${API_BASE_URL}/events`, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type',
+                    }
+                });
+
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+
+                showResult(
+                    `✅ PREFLIGHT SUCCESS!\n\n` +
+                    `Status: ${response.status} ${response.statusText}\n\n` +
+                    `CORS Headers:\n${JSON.stringify(headers, null, 2)}`,
+                    'success'
+                );
+                console.log('OPTIONS /events success:', headers);
+            } catch (error) {
+                showResult(
+                    `❌ ERROR!\n\n` +
+                    `${error.message}\n\n` +
+                    `CORS preflight failed!`,
+                    'error'
+                );
+                console.error('OPTIONS error:', error);
+            }
+        }
+
+        // Log page load
+        console.log('CORS Test Page Loaded');
+        console.log('Testing API at:', API_BASE_URL);
+        console.log('Page origin:', window.location.origin);
+    </script>
+</body>
+</html>
+
