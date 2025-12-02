@@ -5,9 +5,9 @@ import java.util.Objects;
 
 public class Question {
     private String id;
-    private String attendeeId;
-    private String questionText;
-    private String answerText;
+    private String askedBy;
+    private String question;
+    private String answer;
     private LocalDateTime timestamp;
     private Integer upvotes;
 
@@ -15,12 +15,12 @@ public class Question {
         this.upvotes = 0;
     }
 
-    public Question(String id, String attendeeId, String questionText, String answerText,
+    public Question(String id, String askedBy, String question, String answer,
                     LocalDateTime timestamp, Integer upvotes) {
         this.id = id;
-        this.attendeeId = attendeeId;
-        this.questionText = questionText;
-        this.answerText = answerText;
+        this.askedBy = askedBy;
+        this.question = question;
+        this.answer = answer;
         this.timestamp = timestamp;
         this.upvotes = upvotes != null ? upvotes : 0;
     }
@@ -33,28 +33,28 @@ public class Question {
         this.id = id;
     }
 
-    public String getAttendeeId() {
-        return attendeeId;
+    public String getAskedBy() {
+        return askedBy;
     }
 
-    public void setAttendeeId(String attendeeId) {
-        this.attendeeId = attendeeId;
+    public void setAskedBy(String askedBy) {
+        this.askedBy = askedBy;
     }
 
-    public String getQuestionText() {
-        return questionText;
+    public String getQuestion() {
+        return question;
     }
 
-    public void setQuestionText(String questionText) {
-        this.questionText = questionText;
+    public void setQuestion(String question) {
+        this.question = question;
     }
 
-    public String getAnswerText() {
-        return answerText;
+    public String getAnswer() {
+        return answer;
     }
 
-    public void setAnswerText(String answerText) {
-        this.answerText = answerText;
+    public void setAnswer(String answer) {
+        this.answer = answer;
     }
 
     public LocalDateTime getTimestamp() {
@@ -79,25 +79,25 @@ public class Question {
         if (o == null || getClass() != o.getClass()) return false;
         Question question = (Question) o;
         return Objects.equals(id, question.id) &&
-                Objects.equals(attendeeId, question.attendeeId) &&
-                Objects.equals(questionText, question.questionText) &&
-                Objects.equals(answerText, question.answerText) &&
+                Objects.equals(askedBy, question.askedBy) &&
+                Objects.equals(question, question.question) &&
+                Objects.equals(answer, question.answer) &&
                 Objects.equals(timestamp, question.timestamp) &&
                 Objects.equals(upvotes, question.upvotes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, attendeeId, questionText, answerText, timestamp, upvotes);
+        return Objects.hash(id, askedBy, question, answer, timestamp, upvotes);
     }
 
     @Override
     public String toString() {
         return "Question{" +
                 "id='" + id + '\'' +
-                ", attendeeId='" + attendeeId + '\'' +
-                ", questionText='" + questionText + '\'' +
-                ", answerText='" + answerText + '\'' +
+                ", askedBy='" + askedBy + '\'' +
+                ", question='" + question + '\'' +
+                ", answer='" + answer + '\'' +
                 ", timestamp=" + timestamp +
                 ", upvotes=" + upvotes +
                 '}';

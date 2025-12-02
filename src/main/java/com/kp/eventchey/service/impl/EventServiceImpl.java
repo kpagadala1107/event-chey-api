@@ -8,11 +8,11 @@ import com.kp.eventchey.dto.request.CreateEventRequest;
 import com.kp.eventchey.dto.request.InviteAttendeeRequest;
 import com.kp.eventchey.dto.request.UpdateEventRequest;
 import com.kp.eventchey.dto.response.EventResponse;
-import com.kp.eventchey.exception.BadRequestException;
 import com.kp.eventchey.exception.ResourceNotFoundException;
 import com.kp.eventchey.exception.ValidationException;
 import com.kp.eventchey.mapper.EventMapper;
 import com.kp.eventchey.repository.EventRepository;
+import com.kp.eventchey.service.EmailService;
 import com.kp.eventchey.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +31,14 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
     private final AiSummaryService aiSummaryService;
+    private final EmailService emailService;
 
     public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper,
-                           AiSummaryService aiSummaryService) {
+                           AiSummaryService aiSummaryService, EmailService emailService) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
         this.aiSummaryService = aiSummaryService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -111,6 +113,8 @@ public class EventServiceImpl implements EventService {
             event.setAttendees(new ArrayList<>());
         }
 
+        List<Attendee> newAttendees = new ArrayList<>();
+
         for (InviteAttendeeRequest request : attendeeRequests) {
             // Check if attendee already exists
             boolean exists = event.getAttendees().stream()
@@ -125,6 +129,7 @@ public class EventServiceImpl implements EventService {
                 attendee.setStatus(AttendeeStatus.INVITED);
 
                 event.getAttendees().add(attendee);
+                newAttendees.add(attendee);
                 logger.info("Added attendee: {}", request.email());
             } else {
                 logger.warn("Attendee already invited: {}", request.email());
@@ -133,6 +138,12 @@ public class EventServiceImpl implements EventService {
 
         event.setUpdatedAt(LocalDateTime.now());
         Event updatedEvent = eventRepository.save(event);
+
+        // Send invitation emails to new attendees
+        if (!newAttendees.isEmpty()) {
+            logger.info("Sending invitation emails to {} new attendees", newAttendees.size());
+            emailService.sendInvitationEmails(updatedEvent, newAttendees);
+        }
 
         return eventMapper.toResponse(updatedEvent);
     }
@@ -163,6 +174,75 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
         return aiSummaryService.summarizeEvent(event);
+    }
+
+    @Override
+    public List<com.kp.eventchey.dto.response.AttendeeResponse> getAttendees(String eventId) {
+        logger.info("Getting attendees for event: {}", eventId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        if (event.getAttendees() == null || event.getAttendees().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return event.getAttendees().stream()
+                .map(attendee -> new com.kp.eventchey.dto.response.AttendeeResponse(
+                        attendee.getId(),
+                        attendee.getEmail(),
+                        attendee.getPhone(),
+                        attendee.getName(),
+                        attendee.getStatus()
+                ))
+                .toList();
+    }
+
+    @Override
+    public EventResponse removeAttendee(String eventId, String attendeeId) {
+        logger.info("Removing attendee {} from event: {}", attendeeId, eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        if (event.getAttendees() == null) {
+            throw new ResourceNotFoundException("Attendee", "id", attendeeId);
+        }
+
+        boolean removed = event.getAttendees().removeIf(a -> a.getId().equals(attendeeId));
+
+        if (!removed) {
+            throw new ResourceNotFoundException("Attendee", "id", attendeeId);
+        }
+
+        event.setUpdatedAt(LocalDateTime.now());
+        Event updatedEvent = eventRepository.save(event);
+
+        logger.info("Attendee {} removed from event: {}", attendeeId, eventId);
+        return eventMapper.toResponse(updatedEvent);
+    }
+
+    @Override
+    public EventResponse updateAttendeeStatus(String eventId, String attendeeId, AttendeeStatus status) {
+        logger.info("Updating attendee {} status to {} for event: {}", attendeeId, status, eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        if (event.getAttendees() == null) {
+            throw new ResourceNotFoundException("Attendee", "id", attendeeId);
+        }
+
+        Attendee attendee = event.getAttendees().stream()
+                .filter(a -> a.getId().equals(attendeeId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Attendee", "id", attendeeId));
+
+        attendee.setStatus(status);
+        event.setUpdatedAt(LocalDateTime.now());
+        Event updatedEvent = eventRepository.save(event);
+
+        logger.info("Attendee {} status updated to {} for event: {}", attendeeId, status, eventId);
+        return eventMapper.toResponse(updatedEvent);
     }
 }
 

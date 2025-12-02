@@ -3,7 +3,10 @@ package com.kp.eventchey.controller;
 import com.kp.eventchey.ai.AiSummaryService;
 import com.kp.eventchey.dto.request.CreateEventRequest;
 import com.kp.eventchey.dto.request.InviteAttendeeRequest;
+import com.kp.eventchey.dto.request.InviteAttendeesRequest;
+import com.kp.eventchey.dto.request.UpdateAttendeeStatusRequest;
 import com.kp.eventchey.dto.request.UpdateEventRequest;
+import com.kp.eventchey.dto.response.AttendeeResponse;
 import com.kp.eventchey.dto.response.EventResponse;
 import com.kp.eventchey.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,9 +60,46 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{id}/invite")
+    @GetMapping("/{eventId}/attendees")
+    @Operation(summary = "Get all attendees for an event")
+    public ResponseEntity<List<AttendeeResponse>> getAttendees(@PathVariable String eventId) {
+        List<AttendeeResponse> response = eventService.getAttendees(eventId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{eventId}/attendees/invite")
     @Operation(summary = "Invite attendees to an event")
     public ResponseEntity<EventResponse> inviteAttendees(
+            @PathVariable String eventId,
+            @Valid @RequestBody InviteAttendeesRequest request) {
+        EventResponse response = eventService.inviteAttendees(eventId, request.attendees());
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{eventId}/attendees/{attendeeId}")
+    @Operation(summary = "Remove an attendee from an event")
+    public ResponseEntity<EventResponse> removeAttendee(
+            @PathVariable String eventId,
+            @PathVariable String attendeeId) {
+        EventResponse response = eventService.removeAttendee(eventId, attendeeId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{eventId}/attendees/{attendeeId}")
+    @Operation(summary = "Update attendee status")
+    public ResponseEntity<EventResponse> updateAttendeeStatus(
+            @PathVariable String eventId,
+            @PathVariable String attendeeId,
+            @Valid @RequestBody UpdateAttendeeStatusRequest request) {
+        EventResponse response = eventService.updateAttendeeStatus(eventId, attendeeId, request.status());
+        return ResponseEntity.ok(response);
+    }
+
+    // Legacy endpoint for backward compatibility
+    @PostMapping("/{id}/invite")
+    @Operation(summary = "Invite attendees to an event (legacy)")
+    @Deprecated
+    public ResponseEntity<EventResponse> inviteAttendeesLegacy(
             @PathVariable String id,
             @Valid @RequestBody List<InviteAttendeeRequest> attendees) {
         EventResponse response = eventService.inviteAttendees(id, attendees);

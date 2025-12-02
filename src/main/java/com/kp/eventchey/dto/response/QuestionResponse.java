@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 public record QuestionResponse(
         String id,
-        String attendeeId,
-        String questionText,
-        String answerText,
+        String askedBy,
+        String question,
+        String answer,
         LocalDateTime timestamp,
         Integer upvotes
 ) {

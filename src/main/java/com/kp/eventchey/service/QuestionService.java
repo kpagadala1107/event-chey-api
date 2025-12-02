@@ -8,10 +8,10 @@ import java.util.List;
 
 public interface QuestionService {
 
-    QuestionResponse addQuestion(String agendaId, AddQuestionRequest request);
+    QuestionResponse addQuestion(String eventId, String agendaId, AddQuestionRequest request);
 
-    QuestionResponse answerQuestion(String agendaId, String questionId, AnswerQuestionRequest request);
+    QuestionResponse answerQuestion(String eventId, String agendaId, String questionId, AnswerQuestionRequest request);
 
-    List<QuestionResponse> listQuestions(String agendaId);
+    List<QuestionResponse> listQuestions(String eventId, String agendaId);
 }
 

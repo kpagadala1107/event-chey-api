@@ -38,7 +38,7 @@ public class OpenAiSummaryService implements AiSummaryService {
         }
 
         long answeredQuestions = questions.stream()
-                .filter(q -> q.getAnswerText() != null && !q.getAnswerText().isEmpty())
+                .filter(q -> q.getAnswer() != null && !q.getAnswer().isEmpty())
                 .count();
 
         return String.format(

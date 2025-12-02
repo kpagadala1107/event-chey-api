@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/agenda")
+@RequestMapping("/api/events")
 @CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"},
              allowCredentials = "true",
              allowedHeaders = "*",
@@ -28,29 +28,33 @@ public class PollController {
         this.pollService = pollService;
     }
 
-    @PostMapping("/{agendaId}/polls")
+    @PostMapping("/{eventId}/agenda/{agendaId}/polls")
     @Operation(summary = "Create a poll for an agenda item")
     public ResponseEntity<PollResponse> createPoll(
+            @PathVariable String eventId,
             @PathVariable String agendaId,
             @Valid @RequestBody CreatePollRequest request) {
-        PollResponse response = pollService.createPoll(agendaId, request);
+        PollResponse response = pollService.createPoll(eventId, agendaId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{agendaId}/polls/{pollId}/vote")
+    @PostMapping("/{eventId}/agenda/{agendaId}/polls/{pollId}/vote")
     @Operation(summary = "Submit a vote for a poll")
     public ResponseEntity<PollResponse> submitVote(
+            @PathVariable String eventId,
             @PathVariable String agendaId,
             @PathVariable String pollId,
             @Valid @RequestBody SubmitVoteRequest request) {
-        PollResponse response = pollService.submitVote(agendaId, pollId, request);
+        PollResponse response = pollService.submitVote(eventId, agendaId, pollId, request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{agendaId}/polls")
+    @GetMapping("/{eventId}/agenda/{agendaId}/results")
     @Operation(summary = "List all polls for an agenda item")
-    public ResponseEntity<List<PollResponse>> listPolls(@PathVariable String agendaId) {
-        List<PollResponse> response = pollService.listPolls(agendaId);
+    public ResponseEntity<List<PollResponse>> listPolls(
+            @PathVariable String eventId,
+            @PathVariable String agendaId) {
+        List<PollResponse> response = pollService.listPolls(eventId, agendaId);
         return ResponseEntity.ok(response);
     }
 }

@@ -8,10 +8,10 @@ import java.util.List;
 
 public interface PollService {
 
-    PollResponse createPoll(String agendaId, CreatePollRequest request);
+    PollResponse createPoll(String eventId, String agendaId, CreatePollRequest request);
 
-    PollResponse submitVote(String agendaId, String pollId, SubmitVoteRequest request);
+    PollResponse submitVote(String eventId, String agendaId, String pollId, SubmitVoteRequest request);
 
-    List<PollResponse> listPolls(String agendaId);
+    List<PollResponse> listPolls(String eventId, String agendaId);
 }
 

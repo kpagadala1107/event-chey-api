@@ -35,11 +35,11 @@ public class PollServiceImpl implements PollService {
     }
 
     @Override
-    public PollResponse createPoll(String agendaId, CreatePollRequest request) {
-        logger.info("Creating poll for agenda: {}", agendaId);
+    public PollResponse createPoll(String eventId, String agendaId, CreatePollRequest request) {
+        logger.info("Creating poll for agenda: {} in event: {}", agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))
@@ -72,11 +72,11 @@ public class PollServiceImpl implements PollService {
     }
 
     @Override
-    public PollResponse submitVote(String agendaId, String pollId, SubmitVoteRequest request) {
-        logger.info("Submitting vote for poll {} in agenda {}", pollId, agendaId);
+    public PollResponse submitVote(String eventId, String agendaId, String pollId, SubmitVoteRequest request) {
+        logger.info("Submitting vote for poll {} in agenda {} in event {}", pollId, agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))
@@ -89,26 +89,26 @@ public class PollServiceImpl implements PollService {
                 .orElseThrow(() -> new ResourceNotFoundException("Poll", "id", pollId));
 
         // Validate option
-        if (!poll.getOptions().contains(request.option())) {
-            throw new BadRequestException("Invalid poll option: " + request.option());
+        if (!poll.getOptions().contains(request.optionId())) {
+            throw new BadRequestException("Invalid poll option: " + request.optionId());
         }
 
         // Increment vote count
-        poll.getVotes().put(request.option(), poll.getVotes().get(request.option()) + 1);
+        poll.getVotes().put(request.optionId(), poll.getVotes().get(request.optionId()) + 1);
         event.setUpdatedAt(LocalDateTime.now());
 
         eventRepository.save(event);
-        logger.info("Vote submitted for option: {}", request.option());
+        logger.info("Vote submitted for option: {}", request.optionId());
 
         return pollMapper.toResponse(poll);
     }
 
     @Override
-    public List<PollResponse> listPolls(String agendaId) {
-        logger.info("Listing polls for agenda: {}", agendaId);
+    public List<PollResponse> listPolls(String eventId, String agendaId) {
+        logger.info("Listing polls for agenda: {} in event: {}", agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))

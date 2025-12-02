@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/agenda")
+@RequestMapping("/api/events")
 @CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"},
              allowCredentials = "true",
              allowedHeaders = "*",
@@ -28,29 +28,33 @@ public class QuestionController {
         this.questionService = questionService;
     }
 
-    @PostMapping("/{agendaId}/questions")
+    @PostMapping("/{eventId}/agenda/{agendaId}/questions")
     @Operation(summary = "Add a question to an agenda item")
     public ResponseEntity<QuestionResponse> addQuestion(
+            @PathVariable String eventId,
             @PathVariable String agendaId,
             @Valid @RequestBody AddQuestionRequest request) {
-        QuestionResponse response = questionService.addQuestion(agendaId, request);
+        QuestionResponse response = questionService.addQuestion(eventId, agendaId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{agendaId}/questions/{questionId}/answer")
+    @PostMapping("/{eventId}/agenda/{agendaId}/questions/{questionId}/answer")
     @Operation(summary = "Answer a question")
     public ResponseEntity<QuestionResponse> answerQuestion(
+            @PathVariable String eventId,
             @PathVariable String agendaId,
             @PathVariable String questionId,
             @Valid @RequestBody AnswerQuestionRequest request) {
-        QuestionResponse response = questionService.answerQuestion(agendaId, questionId, request);
+        QuestionResponse response = questionService.answerQuestion(eventId, agendaId, questionId, request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{agendaId}/questions")
+    @GetMapping("/{eventId}/agenda/{agendaId}/questions")
     @Operation(summary = "List all questions for an agenda item")
-    public ResponseEntity<List<QuestionResponse>> listQuestions(@PathVariable String agendaId) {
-        List<QuestionResponse> response = questionService.listQuestions(agendaId);
+    public ResponseEntity<List<QuestionResponse>> listQuestions(
+            @PathVariable String eventId,
+            @PathVariable String agendaId) {
+        List<QuestionResponse> response = questionService.listQuestions(eventId, agendaId);
         return ResponseEntity.ok(response);
     }
 }

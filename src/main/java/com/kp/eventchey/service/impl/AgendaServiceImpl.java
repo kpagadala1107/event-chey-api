@@ -86,5 +86,20 @@ public class AgendaServiceImpl implements AgendaService {
 
         return agendaItemMapper.toResponseList(agendaItems);
     }
+
+    @Override
+    public String generateAgendaSummary(String eventId, String agendaId) {
+        logger.info("Generating AI summary for agenda: {}", agendaId);
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        List<AgendaItem> agendaItems = event.getAgenda() != null ? event.getAgenda() : new ArrayList<>();
+        AgendaItem eventAgendaItem = agendaItems.stream()
+                .filter(item -> item.getId().equals(agendaId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+
+        return aiSummaryService.summarizeAgenda(eventAgendaItem);
+    }
 }
 

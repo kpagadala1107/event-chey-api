@@ -10,5 +10,7 @@ public interface AgendaService {
     AgendaItemResponse addAgendaItem(String eventId, AddAgendaItemRequest request);
 
     List<AgendaItemResponse> getAgendaItems(String eventId);
+
+    String generateAgendaSummary(String eventId, String agendaId);
 }
 

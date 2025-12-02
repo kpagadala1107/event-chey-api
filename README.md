@@ -6,6 +6,7 @@ A production-quality Spring Boot 3 application for event management with AI inte
 
 - **Event Management**: Create, update, and manage events
 - **Invitations**: Invite attendees to events
+- **Email Invitations**: Automatically send professional HTML email invitations to attendees
 - **Agenda Timeline**: Create and manage agenda items with scheduling
 - **Q&A System**: Ask questions and get speaker answers with upvoting
 - **Live Polls**: Create polls and collect votes with real-time aggregation
@@ -266,7 +267,36 @@ server.port=8080
 # JWT Configuration (optional)
 jwt.secret=your-secret-key
 jwt.expiration=86400000
+
+# Email Configuration (for invitation feature)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=${EMAIL_USERNAME}
+spring.mail.password=${EMAIL_PASSWORD}
+app.email.from=${EMAIL_FROM:noreply@eventchey.com}
+app.email.enabled=${EMAIL_ENABLED:false}
 ```
+
+### Email Invitations Setup
+
+To enable email invitations, configure the following environment variables:
+
+```bash
+export EMAIL_USERNAME=your-email@gmail.com
+export EMAIL_PASSWORD=your-app-password
+export EMAIL_FROM=noreply@eventchey.com
+export EMAIL_ENABLED=true
+```
+
+Or use the setup script:
+```bash
+./setup-email.sh
+```
+
+For detailed email configuration and troubleshooting, see:
+- **[EMAIL_FEATURE.md](EMAIL_FEATURE.md)** - Complete feature documentation
+- **[EMAIL_EXAMPLES.md](EMAIL_EXAMPLES.md)** - Usage examples and API requests
+- **[EMAIL_IMPLEMENTATION_SUMMARY.md](EMAIL_IMPLEMENTATION_SUMMARY.md)** - Implementation details
 
 ## Project Structure
 

@@ -37,11 +37,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public QuestionResponse addQuestion(String agendaId, AddQuestionRequest request) {
-        logger.info("Adding question to agenda: {}", agendaId);
+    public QuestionResponse addQuestion(String eventId, String agendaId, AddQuestionRequest request) {
+        logger.info("Adding question to agenda: {} in event: {}", agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))
@@ -50,8 +50,8 @@ public class QuestionServiceImpl implements QuestionService {
 
         Question question = new Question();
         question.setId(UUID.randomUUID().toString());
-        question.setAttendeeId(request.attendeeId());
-        question.setQuestionText(request.questionText());
+        question.setAskedBy(request.askedBy());
+        question.setQuestion(request.question());
         question.setTimestamp(LocalDateTime.now());
         question.setUpvotes(0);
 
@@ -69,11 +69,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public QuestionResponse answerQuestion(String agendaId, String questionId, AnswerQuestionRequest request) {
-        logger.info("Answering question {} in agenda {}", questionId, agendaId);
+    public QuestionResponse answerQuestion(String eventId, String agendaId, String questionId, AnswerQuestionRequest request) {
+        logger.info("Answering question {} in agenda {} in event {}", questionId, agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))
@@ -85,7 +85,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Question", "id", questionId));
 
-        question.setAnswerText(request.answerText());
+        question.setAnswer(request.answerText());
         event.setUpdatedAt(LocalDateTime.now());
 
         // Update AI summary with new Q&A
@@ -99,11 +99,11 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public List<QuestionResponse> listQuestions(String agendaId) {
-        logger.info("Listing questions for agenda: {}", agendaId);
+    public List<QuestionResponse> listQuestions(String eventId, String agendaId) {
+        logger.info("Listing questions for agenda: {} in event: {}", agendaId, eventId);
 
-        Event event = eventRepository.findEventByAgendaItemId(agendaId)
-                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
 
         AgendaItem agendaItem = event.getAgenda().stream()
                 .filter(a -> a.getId().equals(agendaId))

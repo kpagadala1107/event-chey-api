@@ -42,5 +42,14 @@ public class AgendaController {
         List<AgendaItemResponse> response = agendaService.getAgendaItems(eventId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{eventId}/agenda/{agendaId}/summary")
+    @Operation(summary = "Summarize Agenda with AI")
+    public ResponseEntity<String> summarizeAgenda(
+            @PathVariable String eventId,
+            @PathVariable String agendaId) {
+        String summary = agendaService.generateAgendaSummary(eventId, agendaId);
+        return ResponseEntity.ok(summary);
+    }
 }
 

@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 
 public record AddQuestionRequest(
         @NotBlank(message = "Attendee ID is required")
-        String attendeeId,
+        String askedBy,
 
         @NotBlank(message = "Question text is required")
-        String questionText
+        String question
 ) {
 }
 
