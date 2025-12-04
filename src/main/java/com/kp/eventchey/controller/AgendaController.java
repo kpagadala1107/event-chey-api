@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/events")
-@CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"},
+@CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000", "https://event-chey.netlify.app"},
              allowCredentials = "true",
              allowedHeaders = "*",
              methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS, RequestMethod.PATCH})
