@@ -13,7 +13,9 @@ public record EventResponse(
         List<AttendeeResponse> attendees,
         List<AgendaItemResponse> agenda,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String cachedAiSummary,
+        LocalDateTime aiSummaryGeneratedAt
 ) {
 }
 

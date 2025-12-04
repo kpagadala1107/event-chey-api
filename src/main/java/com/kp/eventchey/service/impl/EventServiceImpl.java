@@ -1,6 +1,10 @@
 package com.kp.eventchey.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.kp.eventchey.ai.AiSummaryService;
+import com.kp.eventchey.domain.AgendaItem;
 import com.kp.eventchey.domain.Attendee;
 import com.kp.eventchey.domain.AttendeeStatus;
 import com.kp.eventchey.domain.Event;
@@ -14,13 +18,16 @@ import com.kp.eventchey.mapper.EventMapper;
 import com.kp.eventchey.repository.EventRepository;
 import com.kp.eventchey.service.EmailService;
 import com.kp.eventchey.service.EventService;
+import com.kp.eventchey.service.LLMService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -32,13 +39,16 @@ public class EventServiceImpl implements EventService {
     private final EventMapper eventMapper;
     private final AiSummaryService aiSummaryService;
     private final EmailService emailService;
+    private final LLMService llmService;
 
     public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper,
-                           AiSummaryService aiSummaryService, EmailService emailService) {
+                           AiSummaryService aiSummaryService, EmailService emailService,
+                           LLMService llmService) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
         this.aiSummaryService = aiSummaryService;
         this.emailService = emailService;
+        this.llmService = llmService;
     }
 
     @Override
@@ -54,10 +64,101 @@ public class EventServiceImpl implements EventService {
         event.setCreatedAt(LocalDateTime.now());
         event.setUpdatedAt(LocalDateTime.now());
 
+        // Generate agenda using AI
+        try {
+            logger.info("Generating agenda for event: {}", request.name());
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            String startDateStr = request.startDate().format(formatter);
+            String endDateStr = request.endDate().format(formatter);
+
+            logger.debug("Event times - Start: {}, End: {}", startDateStr, endDateStr);
+
+            String agendaJson = llmService.generateAgenda(
+                request.name(),
+                request.description(),
+                startDateStr,
+                endDateStr
+            );
+
+            // Parse JSON response and create AgendaItem objects
+            List<AgendaItem> agendaItems = parseAgendaFromJson(agendaJson, request.startDate(), request.endDate());
+            event.setAgenda(agendaItems);
+            logger.info("Generated {} agenda items for event", agendaItems.size());
+        } catch (Exception e) {
+            logger.error("Failed to generate agenda for event: {}", request.name(), e);
+            // Continue with event creation even if agenda generation fails
+            event.setAgenda(new ArrayList<>());
+        }
+
         Event savedEvent = eventRepository.save(event);
         logger.info("Event created with ID: {}", savedEvent.getId());
 
         return eventMapper.toResponse(savedEvent);
+    }
+
+    private List<AgendaItem> parseAgendaFromJson(String json, LocalDateTime eventStart, LocalDateTime eventEnd) {
+        try {
+            // Clean JSON response (remove markdown code blocks if present)
+            String cleanJson = json.trim();
+            if (cleanJson.startsWith("```json")) {
+                cleanJson = cleanJson.substring(7);
+            } else if (cleanJson.startsWith("```")) {
+                cleanJson = cleanJson.substring(3);
+            }
+            if (cleanJson.endsWith("```")) {
+                cleanJson = cleanJson.substring(0, cleanJson.length() - 3);
+            }
+            cleanJson = cleanJson.trim();
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+
+            List<Map<String, Object>> agendaData = objectMapper.readValue(
+                cleanJson,
+                new TypeReference<>() {}
+            );
+
+            List<AgendaItem> agendaItems = new ArrayList<>();
+            for (Map<String, Object> itemData : agendaData) {
+                AgendaItem item = new AgendaItem();
+                item.setId(UUID.randomUUID().toString());
+                item.setTitle((String) itemData.get("title"));
+                item.setDescription((String) itemData.get("description"));
+                item.setSpeaker((String) itemData.get("speaker"));
+
+                // Parse start and end times
+                String startTimeStr = (String) itemData.get("startTime");
+                String endTimeStr = (String) itemData.get("endTime");
+
+                if (startTimeStr != null) {
+                    LocalDateTime startTime = LocalDateTime.parse(startTimeStr);
+                    item.setStartTime(startTime);
+
+                    // Validate time is within event boundaries
+                    if (startTime.isBefore(eventStart) || startTime.isAfter(eventEnd)) {
+                        logger.warn("Agenda item '{}' start time {} is outside event boundaries [{}, {}]",
+                            item.getTitle(), startTime, eventStart, eventEnd);
+                    }
+                }
+                if (endTimeStr != null) {
+                    LocalDateTime endTime = LocalDateTime.parse(endTimeStr);
+                    item.setEndTime(endTime);
+
+                    // Validate time is within event boundaries
+                    if (endTime.isBefore(eventStart) || endTime.isAfter(eventEnd)) {
+                        logger.warn("Agenda item '{}' end time {} is outside event boundaries [{}, {}]",
+                            item.getTitle(), endTime, eventStart, eventEnd);
+                    }
+                }
+
+                agendaItems.add(item);
+            }
+
+            return agendaItems;
+        } catch (Exception e) {
+            logger.error("Failed to parse agenda JSON: {}", json, e);
+            return new ArrayList<>();
+        }
     }
 
     @Override
@@ -169,11 +270,31 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public String generateEventSummary(String eventId) {
+    public EventResponse generateEventSummary(String eventId) {
         logger.info("Generating AI summary for event: {}", eventId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
-        return aiSummaryService.summarizeEvent(event);
+
+        // Check if we have a cached summary and if the event hasn't been updated since
+        if (event.getCachedAiSummary() != null &&
+            event.getAiSummaryGeneratedAt() != null &&
+            event.getUpdatedAt() != null &&
+            !event.getUpdatedAt().isAfter(event.getAiSummaryGeneratedAt())) {
+            logger.info("Returning cached AI summary for event: {}", eventId);
+            return eventMapper.toResponse(event);
+        }
+
+        // Generate new summary
+        logger.info("Generating new AI summary for event: {}", eventId);
+        String summary = aiSummaryService.summarizeEvent(event);
+
+        // Cache the summary and timestamp
+        event.setCachedAiSummary(summary);
+        event.setAiSummaryGeneratedAt(LocalDateTime.now());
+        eventRepository.save(event);
+
+        logger.info("AI summary generated and cached for event: {}", eventId);
+        return eventMapper.toResponse(event);
     }
 
     @Override

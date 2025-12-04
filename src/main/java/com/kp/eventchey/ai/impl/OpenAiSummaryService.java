@@ -4,8 +4,10 @@ import com.kp.eventchey.ai.AiSummaryService;
 import com.kp.eventchey.domain.AgendaItem;
 import com.kp.eventchey.domain.Event;
 import com.kp.eventchey.domain.Question;
+import com.kp.eventchey.service.LLMService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +16,9 @@ import java.util.List;
 public class OpenAiSummaryService implements AiSummaryService {
 
     private static final Logger logger = LoggerFactory.getLogger(OpenAiSummaryService.class);
+
+    @Autowired
+    private  LLMService llmService = new LLMService();
 
     @Override
     public String summarizeAgenda(AgendaItem agendaItem) {
@@ -53,14 +58,15 @@ public class OpenAiSummaryService implements AiSummaryService {
     public String summarizeEvent(Event event) {
         logger.info("Generating AI summary for event: {}", event.getId());
 
+        return llmService.summarizeEvent(event);
         // Stub implementation - no real API calls
-        return String.format(
-                "AI Summary not available in development mode. Event: '%s' with %d attendees and %d agenda items. Created by: %s",
-                event.getName(),
-                event.getAttendees() != null ? event.getAttendees().size() : 0,
-                event.getAgenda() != null ? event.getAgenda().size() : 0,
-                event.getCreatedBy()
-        );
+//        return String.format(
+//                "AI Summary not available in development mode. Event: '%s' with %d attendees and %d agenda items. Created by: %s",
+//                event.getName(),
+//                event.getAttendees() != null ? event.getAttendees().size() : 0,
+//                event.getAgenda() != null ? event.getAgenda().size() : 0,
+//                event.getCreatedBy()
+//        );
     }
 }
 

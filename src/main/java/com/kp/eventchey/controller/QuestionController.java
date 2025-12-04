@@ -49,6 +49,17 @@ public class QuestionController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{eventId}/agenda/{agendaId}/questions/{questionId}/answer")
+    @Operation(summary = "edit answer to a question")
+    public ResponseEntity<QuestionResponse> updateAnswer(
+            @PathVariable String eventId,
+            @PathVariable String agendaId,
+            @PathVariable String questionId,
+            @Valid @RequestBody AnswerQuestionRequest request) {
+        QuestionResponse response = questionService.answerQuestion(eventId, agendaId, questionId, request);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{eventId}/agenda/{agendaId}/questions")
     @Operation(summary = "List all questions for an agenda item")
     public ResponseEntity<List<QuestionResponse>> listQuestions(

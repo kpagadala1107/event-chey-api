@@ -118,7 +118,7 @@ public class EventController {
 
     @GetMapping("/{id}/summary")
     @Operation(summary = "Summarize Event with AI")
-    public ResponseEntity<String> summarizeEvent(
+    public ResponseEntity<EventResponse> summarizeEvent(
             @PathVariable String id) {
         return ResponseEntity.ok(eventService.generateEventSummary(id));
     }

@@ -21,6 +21,8 @@ public class Event {
     private List<AgendaItem> agenda;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String cachedAiSummary;
+    private LocalDateTime aiSummaryGeneratedAt;
 
     public Event() {
         this.attendees = new ArrayList<>();
@@ -31,7 +33,8 @@ public class Event {
 
     public Event(String id, String name, String description, LocalDateTime startDate,
                  LocalDateTime endDate, String createdBy, List<Attendee> attendees,
-                 List<AgendaItem> agenda, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                 List<AgendaItem> agenda, LocalDateTime createdAt, LocalDateTime updatedAt,
+                 String cachedAiSummary, LocalDateTime aiSummaryGeneratedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -42,6 +45,8 @@ public class Event {
         this.agenda = agenda != null ? agenda : new ArrayList<>();
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
         this.updatedAt = updatedAt != null ? updatedAt : LocalDateTime.now();
+        this.cachedAiSummary = cachedAiSummary;
+        this.aiSummaryGeneratedAt = aiSummaryGeneratedAt;
     }
 
     public String getId() {
@@ -124,6 +129,22 @@ public class Event {
         this.updatedAt = updatedAt;
     }
 
+    public String getCachedAiSummary() {
+        return cachedAiSummary;
+    }
+
+    public void setCachedAiSummary(String cachedAiSummary) {
+        this.cachedAiSummary = cachedAiSummary;
+    }
+
+    public LocalDateTime getAiSummaryGeneratedAt() {
+        return aiSummaryGeneratedAt;
+    }
+
+    public void setAiSummaryGeneratedAt(LocalDateTime aiSummaryGeneratedAt) {
+        this.aiSummaryGeneratedAt = aiSummaryGeneratedAt;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -138,13 +159,15 @@ public class Event {
                 Objects.equals(attendees, event.attendees) &&
                 Objects.equals(agenda, event.agenda) &&
                 Objects.equals(createdAt, event.createdAt) &&
-                Objects.equals(updatedAt, event.updatedAt);
+                Objects.equals(updatedAt, event.updatedAt) &&
+                Objects.equals(cachedAiSummary, event.cachedAiSummary) &&
+                Objects.equals(aiSummaryGeneratedAt, event.aiSummaryGeneratedAt);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, name, description, startDate, endDate, createdBy,
-                          attendees, agenda, createdAt, updatedAt);
+                          attendees, agenda, createdAt, updatedAt, cachedAiSummary, aiSummaryGeneratedAt);
     }
 
     @Override
@@ -160,6 +183,8 @@ public class Event {
                 ", agenda=" + agenda +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
+                ", cachedAiSummary='" + cachedAiSummary + '\'' +
+                ", aiSummaryGeneratedAt=" + aiSummaryGeneratedAt +
                 '}';
     }
 }

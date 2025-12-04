@@ -16,6 +16,8 @@ public interface EventMapper {
     @Mapping(target = "agenda", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "cachedAiSummary", ignore = true)
+    @Mapping(target = "aiSummaryGeneratedAt", ignore = true)
     Event toEntity(CreateEventRequest request);
 
     EventResponse toResponse(Event event);

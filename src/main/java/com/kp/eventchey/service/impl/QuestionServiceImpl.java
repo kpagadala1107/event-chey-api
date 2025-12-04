@@ -85,7 +85,7 @@ public class QuestionServiceImpl implements QuestionService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Question", "id", questionId));
 
-        question.setAnswer(request.answerText());
+        question.setAnswer(request.answer());
         event.setUpdatedAt(LocalDateTime.now());
 
         // Update AI summary with new Q&A

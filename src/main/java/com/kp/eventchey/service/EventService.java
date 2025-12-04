@@ -22,7 +22,7 @@ public interface EventService {
 
     List<EventResponse> listEvents(String createdBy, LocalDateTime from, LocalDateTime to);
 
-    String generateEventSummary(String eventId);
+    EventResponse generateEventSummary(String eventId);
 
     List<AttendeeResponse> getAttendees(String eventId);
 
