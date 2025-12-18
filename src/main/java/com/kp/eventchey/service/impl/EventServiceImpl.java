@@ -65,30 +65,30 @@ public class EventServiceImpl implements EventService {
         event.setUpdatedAt(LocalDateTime.now());
 
         // Generate agenda using AI
-        try {
-            logger.info("Generating agenda for event: {}", request.name());
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            String startDateStr = request.startDate().format(formatter);
-            String endDateStr = request.endDate().format(formatter);
-
-            logger.debug("Event times - Start: {}, End: {}", startDateStr, endDateStr);
-
-            String agendaJson = llmService.generateAgenda(
-                request.name(),
-                request.description(),
-                startDateStr,
-                endDateStr
-            );
-
-            // Parse JSON response and create AgendaItem objects
-            List<AgendaItem> agendaItems = parseAgendaFromJson(agendaJson, request.startDate(), request.endDate());
-            event.setAgenda(agendaItems);
-            logger.info("Generated {} agenda items for event", agendaItems.size());
-        } catch (Exception e) {
-            logger.error("Failed to generate agenda for event: {}", request.name(), e);
-            // Continue with event creation even if agenda generation fails
-            event.setAgenda(new ArrayList<>());
-        }
+//        try {
+//            logger.info("Generating agenda for event: {}", request.name());
+//            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+//            String startDateStr = request.startDate().format(formatter);
+//            String endDateStr = request.endDate().format(formatter);
+//
+//            logger.debug("Event times - Start: {}, End: {}", startDateStr, endDateStr);
+//
+//            String agendaJson = llmService.generateAgenda(
+//                request.name(),
+//                request.description(),
+//                startDateStr,
+//                endDateStr
+//            );
+//
+//            // Parse JSON response and create AgendaItem objects
+//            List<AgendaItem> agendaItems = parseAgendaFromJson(agendaJson, request.startDate(), request.endDate());
+//            event.setAgenda(agendaItems);
+//            logger.info("Generated {} agenda items for event", agendaItems.size());
+//        } catch (Exception e) {
+//            logger.error("Failed to generate agenda for event: {}", request.name(), e);
+//            // Continue with event creation even if agenda generation fails
+//            event.setAgenda(new ArrayList<>());
+//        }
 
         Event savedEvent = eventRepository.save(event);
         logger.info("Event created with ID: {}", savedEvent.getId());
@@ -364,6 +364,20 @@ public class EventServiceImpl implements EventService {
 
         logger.info("Attendee {} status updated to {} for event: {}", attendeeId, status, eventId);
         return eventMapper.toResponse(updatedEvent);
+    }
+
+    @Override
+    public EventResponse deleteEvent(String eventId) {
+
+        logger.info("Deleting event: {}", eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        eventRepository.delete(event);
+
+        logger.info("Event deleted: {}", eventId);
+        return eventMapper.toResponse(event);
     }
 }
 

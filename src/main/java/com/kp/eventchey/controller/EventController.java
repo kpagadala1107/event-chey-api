@@ -60,6 +60,14 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{eventId}")
+    @Operation(summary = "Remove event")
+    public ResponseEntity<Void> deleteEvent(
+            @PathVariable String eventId) {
+        EventResponse response = eventService.deleteEvent(eventId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{eventId}/attendees")
     @Operation(summary = "Get all attendees for an event")
     public ResponseEntity<List<AttendeeResponse>> getAttendees(@PathVariable String eventId) {

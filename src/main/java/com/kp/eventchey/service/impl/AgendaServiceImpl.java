@@ -4,6 +4,7 @@ import com.kp.eventchey.ai.AiSummaryService;
 import com.kp.eventchey.domain.AgendaItem;
 import com.kp.eventchey.domain.Event;
 import com.kp.eventchey.dto.request.AddAgendaItemRequest;
+import com.kp.eventchey.dto.request.UpdateAgendaItemRequest;
 import com.kp.eventchey.dto.response.AgendaItemResponse;
 import com.kp.eventchey.exception.ResourceNotFoundException;
 import com.kp.eventchey.exception.ValidationException;
@@ -100,6 +101,42 @@ public class AgendaServiceImpl implements AgendaService {
                 .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
 
         return aiSummaryService.summarizeAgenda(eventAgendaItem);
+    }
+
+    @Override
+    public AgendaItemResponse updateAgendaItem(String eventId, String agendaId, UpdateAgendaItemRequest request) {
+        logger.info("Updating agenda item: {} for event: {}", agendaId, eventId);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event", "id", eventId));
+
+        // Validate times
+        if (request.endTime().isBefore(request.startTime())) {
+            throw new ValidationException("End time must be after start time");
+        }
+
+        List<AgendaItem> agendaItems = event.getAgenda() != null ? event.getAgenda() : new ArrayList<>();
+        AgendaItem agendaItem = agendaItems.stream()
+                .filter(item -> item.getId().equals(agendaId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("AgendaItem", "id", agendaId));
+
+        // Update agenda item fields
+        agendaItem.setTitle(request.title());
+        agendaItem.setStartTime(request.startTime());
+        agendaItem.setEndTime(request.endTime());
+        agendaItem.setDescription(request.description());
+        agendaItem.setSpeaker(request.speaker());
+
+        // Regenerate AI summary with updated data
+        String aiSummary = aiSummaryService.summarizeAgenda(agendaItem);
+        agendaItem.setAiSummary(aiSummary);
+
+        event.setUpdatedAt(LocalDateTime.now());
+        eventRepository.save(event);
+
+        logger.info("Agenda item updated: {}", agendaId);
+        return agendaItemMapper.toResponse(agendaItem);
     }
 }
 

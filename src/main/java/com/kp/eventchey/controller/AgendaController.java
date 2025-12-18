@@ -1,6 +1,7 @@
 package com.kp.eventchey.controller;
 
 import com.kp.eventchey.dto.request.AddAgendaItemRequest;
+import com.kp.eventchey.dto.request.UpdateAgendaItemRequest;
 import com.kp.eventchey.dto.response.AgendaItemResponse;
 import com.kp.eventchey.service.AgendaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +51,16 @@ public class AgendaController {
             @PathVariable String agendaId) {
         String summary = agendaService.generateAgendaSummary(eventId, agendaId);
         return ResponseEntity.ok(summary);
+    }
+
+    @PutMapping("/{eventId}/agenda/{agendaId}")
+    @Operation(summary = "Update an agenda item")
+    public ResponseEntity<AgendaItemResponse> updateAgendaItem(
+            @PathVariable String eventId,
+            @PathVariable String agendaId,
+            @Valid @RequestBody UpdateAgendaItemRequest request) {
+        AgendaItemResponse response = agendaService.updateAgendaItem(eventId, agendaId, request);
+        return ResponseEntity.ok(response);
     }
 }
 

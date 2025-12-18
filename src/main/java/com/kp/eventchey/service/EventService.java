@@ -29,5 +29,7 @@ public interface EventService {
     EventResponse removeAttendee(String eventId, String attendeeId);
 
     EventResponse updateAttendeeStatus(String eventId, String attendeeId, AttendeeStatus status);
+
+    EventResponse deleteEvent(String eventId);
 }
 
